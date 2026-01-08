@@ -1,14 +1,17 @@
-const { onNewChat, getData } = require("../../database");
+const { onChildAdded, getData } = require("../database");
 
 let lastKey = null;
 
 module.exports = async function () {
+  console.log("🎧 IngameChat listener active");
 
-  onNewChat(async (key, data) => {
+  onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
 
     if (key === lastKey) return;
     lastKey = key;
+
+    console.log("📩 New chat:", data.message);
 
     const subs = await getData("ingamechat") || {};
 
@@ -19,5 +22,4 @@ module.exports = async function () {
       global.api.sendMessage(msg, threadID);
     }
   });
-
 };
