@@ -59,18 +59,14 @@ for (const file of fs.readdirSync(cmdPath)) {
   }
 }
 
-// ================= LOAD EVENTS =================
+// ================= LOAD EVENTS (FIXED ENGINE) =================
 const evPath = path.join(__dirname, "Jaylord/events");
 for (const file of fs.readdirSync(evPath)) {
   try {
     const ev = require(path.join(evPath, file));
-    if (!ev.config?.eventType || !ev.run) continue;
+    if (!ev.config?.name || !ev.run) continue;
 
-    for (const type of ev.config.eventType) {
-      if (!global.client.events.has(type)) global.client.events.set(type, []);
-      global.client.events.get(type).push(ev);
-    }
-
+    global.client.events.set(ev.config.name, ev);
     console.log(`🎯 Event loaded: ${ev.config.name}`);
   } catch (e) {
     console.log(`❌ Event error: ${file}`, e.message);
@@ -79,14 +75,25 @@ for (const file of fs.readdirSync(evPath)) {
 
 // ================= HANDLERS =================
 const commandHandler = require("./utils/commandHandler");
-const eventHandler = require("./utils/eventHandler");
+
+// 🔥 REAL MIRAI EVENT HANDLER (INLINE, NO CONFLICT)
+async function eventHandler({ api, event }) {
+  for (const ev of global.client.events.values()) {
+    if (!ev.config.eventType.includes(event.logMessageType || event.type)) continue;
+
+    try {
+      await ev.run({ api, event });
+    } catch (err) {
+      console.error(`❌ Event error [${ev.config.name}]:`, err);
+    }
+  }
+}
 
 // ================= LOGIN =================
 login({ appState }, (err, api) => {
   if (err) return console.error(err);
   global.api = api;
 
-  // 🔥 THIS LINE IS THE MISSING KEY
   api.setOptions({
     listenEvents: true,
     updatePresence: true,
@@ -98,7 +105,7 @@ login({ appState }, (err, api) => {
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
 
-    console.log("📥 EVENT:", event.type); // Debug
+    console.log("📥 EVENT:", event.logMessageType || event.type);
 
     try {
       await eventHandler({ api, event });
