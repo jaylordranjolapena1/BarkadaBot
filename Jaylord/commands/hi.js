@@ -1,6 +1,14 @@
-module.exports = {
+module.exports.config = {
   name: "hi",
-  execute({ api, event, config }) {
-    api.sendMessage(`Hello! ${config.botName} here 👋`, event.threadID);
-  }
+  version: "1.0.0",
+  hasPermssion: 0,
+  credits: "Barkada",
+  description: "Simple greeting",
+  commandCategory: "General",
+  usages: "",
+  cooldowns: 5
+};
+
+module.exports.run = function({ api, event }) {
+  api.sendMessage("Hello! BarkadaBot here 👋", event.threadID);
 };
