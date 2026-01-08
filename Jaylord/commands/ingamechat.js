@@ -2,13 +2,22 @@ const { getData, setData } = require("../../database");
 
 module.exports.config = {
   name: "ingamechat",
-  version: "1.0",
-  credits: "Barkada",
-  description: "Toggle in-game chat relay"
+  version: "1.1",
+  credits: "Barkada + ChatGPT",
+  description: "Toggle in-game chat relay (Admin only)"
 };
 
 module.exports.run = async ({ api, event }) => {
-  const { threadID, body } = event;
+  const { threadID, body, senderID } = event;
+
+  // 🛡 BOT ADMIN CHECK
+  const admins = global.config.adminUIDs || [];
+  if (!admins.includes(senderID)) {
+    return api.sendMessage(
+      "⛔ This command is restricted to bot administrators only.",
+      threadID
+    );
+  }
 
   const args = body.trim().split(/\s+/).slice(1);
 
