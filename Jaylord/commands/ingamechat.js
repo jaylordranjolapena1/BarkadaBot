@@ -8,7 +8,9 @@ module.exports.config = {
 };
 
 module.exports.run = async ({ api, event }) => {
-  const { threadID, args } = event;
+  const { threadID, body } = event;
+
+  const args = body.trim().split(/\s+/).slice(1);
 
   if (!args[0]) {
     return api.sendMessage("Usage: /ingamechat on | off", threadID);
@@ -16,15 +18,15 @@ module.exports.run = async ({ api, event }) => {
 
   const path = `ingamechat/${threadID}`;
 
-  if (args[0] === "on") {
+  if (args[0].toLowerCase() === "on") {
     await setData(path, true);
     return api.sendMessage("🟢 In-game chat relay enabled.", threadID);
   }
 
-  if (args[0] === "off") {
+  if (args[0].toLowerCase() === "off") {
     await setData(path, false);
     return api.sendMessage("🔴 In-game chat relay disabled.", threadID);
   }
 
-  api.sendMessage("Usage: /ingamechat on | off", threadID);
+  return api.sendMessage("Usage: /ingamechat on | off", threadID);
 };
