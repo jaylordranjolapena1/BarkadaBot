@@ -2,15 +2,24 @@ const { setData, getData } = require("../../database.js");
 
 module.exports.config = {
   name: "welcomevideo",
-  version: "1.0.0",
-  credits: "ChatGPT",
-  description: "Enable or disable welcome video",
+  version: "1.1.0",
+  credits: "ChatGPT + Barkada",
+  description: "Enable or disable welcome video (Admin only)",
   usage: "/welcomevideo on | off",
   cooldown: 3
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  const { threadID } = event;
+  const { threadID, senderID } = event;
+
+  // 🛡 BOT ADMIN CHECK
+  const admins = global.config.adminUIDs || [];
+  if (!admins.includes(senderID)) {
+    return api.sendMessage(
+      "⛔ This command is restricted to bot administrators only.",
+      threadID
+    );
+  }
 
   if (!args[0]) {
     return api.sendMessage("Usage: /welcomevideo on | off", threadID);
