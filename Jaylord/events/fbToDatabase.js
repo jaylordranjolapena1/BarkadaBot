@@ -2,7 +2,7 @@ const { pushData, getData } = require("../../database");
 
 module.exports.config = {
   name: "fbToDatabase",
-  eventType: ["message"]
+  eventType: ["typ"]
 };
 
 module.exports.run = async function ({ api, event }) {
