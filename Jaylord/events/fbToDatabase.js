@@ -2,22 +2,23 @@ const { pushData, getData } = require("../../database");
 
 module.exports.config = {
   name: "fbToDatabase",
-  eventType: ["message", "message_reply"]
+  eventType: ["message"]
 };
 
 module.exports.run = async function ({ api, event }) {
-
-  console.log("🔥 fbToDatabase triggered", event.type);
 
   if (!event.body) return;
   if (event.senderID === api.getCurrentUserID()) return;
 
   const threadID = event.threadID;
 
+  // 🔒 Check kung enabled sa GC
   const enabled = await getData(`ingamechat/${threadID}`);
-  console.log("CHAT TO DB ENABLED:", enabled, typeof enabled);
 
-  if (enabled !== true && enabled !== "true" && enabled !== 1) return;
+  console.log("📦 IngameChat status:", threadID, "=", enabled);
+
+  // Accepts: true, "true", 1
+  if (!(enabled === true || enabled === "true" || enabled === 1)) return;
 
   const msg = event.body.trim();
   if (!msg) return;
