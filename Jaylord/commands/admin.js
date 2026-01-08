@@ -27,9 +27,9 @@ module.exports.run = async function ({ api, event, args, Users, permssion }) {
   delete require.cache[require.resolve(configPath)];
   const config = require(configPath);
 
-  if (!Array.isArray(config.ADMINBOT)) config.ADMINBOT = [];
+  if (!Array.isArray(config.adminUIDs)) config.adminUIDs = [];
 
-  const ADMINBOT = config.ADMINBOT.map(String);
+  const ADMINBOT = config.adminUIDs.map(String);
   const mentionIDs = Object.keys(mentions || {});
   const content = args.slice(1);
 
