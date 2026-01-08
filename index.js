@@ -33,31 +33,36 @@ global.utils = {
   }
 };
 
-// ===== Load Commands (Protected) =====
+// ===== Load Users System =====
+global.Users = require("./utils/Users");
+
+// ===== Load Commands =====
 const cmdPath = path.join(__dirname, "Jaylord/commands");
-fs.readdirSync(cmdPath).forEach(file => {
+for (const file of fs.readdirSync(cmdPath)) {
   try {
     const cmd = require(path.join(cmdPath, file));
-    if (!cmd.config || !cmd.config.name || !cmd.run) return;
+    if (!cmd.config || !cmd.config.name || !cmd.run) continue;
+
     global.client.commands.set(cmd.config.name, cmd);
     console.log(`✅ Command loaded: ${cmd.config.name}`);
-  } catch (err) {
-    console.log(`❌ Command error: ${file}`, err.message);
+  } catch (e) {
+    console.log(`❌ Command error: ${file}`, e.message);
   }
-});
+}
 
-// ===== Load Events (Protected) =====
+// ===== Load Events =====
 const evPath = path.join(__dirname, "Jaylord/events");
-fs.readdirSync(evPath).forEach(file => {
+for (const file of fs.readdirSync(evPath)) {
   try {
     const ev = require(path.join(evPath, file));
-    if (!ev.config || !ev.config.name || !ev.run) return;
+    if (!ev.config || !ev.config.name || !ev.run) continue;
+
     global.client.events.set(ev.config.name, ev);
     console.log(`🎯 Event loaded: ${ev.config.name}`);
-  } catch (err) {
-    console.log(`❌ Event error: ${file}`, err.message);
+  } catch (e) {
+    console.log(`❌ Event error: ${file}`, e.message);
   }
-});
+}
 
 // ===== Handlers =====
 const commandHandler = require("./utils/commandHandler");
@@ -73,7 +78,11 @@ login({ appState }, (err, api) => {
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
 
-    await eventHandler({ api, event });
-    await commandHandler({ api, event });
+    try {
+      await eventHandler({ api, event });
+      await commandHandler({ api, event, Users: global.Users });
+    } catch (e) {
+      console.error("Handler error:", e);
+    }
   });
 });
