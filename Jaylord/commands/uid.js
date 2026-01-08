@@ -1,38 +1,36 @@
 module.exports = {
   config: {
     name: "uid",
-    version: "1.0.6",
+    version: "1.1.0",
     hasPermssion: 0,
     credits: "BarkadaBot",
-    description: "Get user Facebook ID",
+    description: "Get Facebook UID",
     commandCategory: "Utility",
     usages: "[mention/reply/userID]",
     cooldowns: 2
   },
 
   run: async function ({ api, event, args }) {
-    const { threadID, messageID } = event;
+    const { threadID, messageID, body, senderID } = event;
 
-    let targetID;
+    let targetID = senderID;
 
-    // 1️⃣ If reply — most reliable
-    if (event.messageReply && event.messageReply.senderID) {
+    // 1️⃣ Reply (most accurate)
+    if (event.messageReply?.senderID) {
       targetID = event.messageReply.senderID;
     }
 
-    // 2️⃣ If mention — same logic as your working activist command
-    else if (event.mentions && Object.keys(event.mentions).length > 0) {
-      targetID = Object.keys(event.mentions)[0];
-    }
-
-    // 3️⃣ If user typed numeric ID
-    else if (args[0] && !isNaN(args[0])) {
-      targetID = args[0];
-    }
-
-    // 4️⃣ Default: sender
+    // 2️⃣ Real mention parsing from message body
     else {
-      targetID = event.senderID;
+      const match = body.match(/@.+?\((\d+)\)/);
+      if (match && match[1]) {
+        targetID = match[1];
+      }
+
+      // 3️⃣ Manual ID
+      else if (args[0] && /^\d+$/.test(args[0])) {
+        targetID = args[0];
+      }
     }
 
     return api.sendMessage(
