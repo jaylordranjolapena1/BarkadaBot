@@ -18,27 +18,51 @@ global.client = {
 
 // ===== Render Port Fix =====
 app.get("/", (req, res) => res.send("Barkada Bot is running"));
-app.listen(process.env.PORT || 3000);
-
-// ===== Load Commands =====
-const cmdPath = path.join(__dirname, "Jaylord/commands");
-fs.readdirSync(cmdPath).forEach(file => {
-  const cmd = require(path.join(cmdPath, file));
-  global.client.commands.set(cmd.config.name, cmd);
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Web server ready");
 });
 
-// ===== Load Events =====
+// ===== Load Commands (Protected) =====
+const cmdPath = path.join(__dirname, "Jaylord/commands");
+fs.readdirSync(cmdPath).forEach(file => {
+  try {
+    const cmd = require(path.join(cmdPath, file));
+
+    if (!cmd.config || !cmd.config.name || !cmd.run) {
+      console.log(`⚠️ Skipped invalid command: ${file}`);
+      return;
+    }
+
+    global.client.commands.set(cmd.config.name, cmd);
+    console.log(`✅ Loaded command: ${cmd.config.name}`);
+  } catch (err) {
+    console.log(`❌ Error loading command ${file}:`, err.message);
+  }
+});
+
+// ===== Load Events (Protected) =====
 const evPath = path.join(__dirname, "Jaylord/events");
 fs.readdirSync(evPath).forEach(file => {
-  const ev = require(path.join(evPath, file));
-  global.client.events.set(ev.config.name, ev);
+  try {
+    const ev = require(path.join(evPath, file));
+
+    if (!ev.config || !ev.config.name || !ev.run) {
+      console.log(`⚠️ Skipped invalid event: ${file}`);
+      return;
+    }
+
+    global.client.events.set(ev.config.name, ev);
+    console.log(`🎯 Loaded event: ${ev.config.name}`);
+  } catch (err) {
+    console.log(`❌ Error loading event ${file}:`, err.message);
+  }
 });
 
 // ===== Utils =====
 global.utils = {
   throwError(cmd, threadID, messageID) {
     return global.api.sendMessage(
-      `⚠️ Usage error: ${config.prefix}${cmd}`,
+      `⚠️ Usage error: ${config.PREFIX}${cmd}`,
       threadID,
       messageID
     );
@@ -62,8 +86,8 @@ login({ appState }, (err, api) => {
       }
     }
 
+    // ===== COMMAND HANDLER =====
     if (event.type !== "message" || !event.body) return;
-
     if (!event.body.startsWith(config.PREFIX)) return;
 
     const args = event.body.slice(config.PREFIX.length).trim().split(/ +/);
@@ -76,6 +100,10 @@ login({ appState }, (err, api) => {
     const ADMINBOT = config.ADMINBOT || [];
     let permssion = ADMINBOT.includes(senderID) ? 2 : 0;
 
-    await cmd.run({ api, event, args, permssion });
+    try {
+      await cmd.run({ api, event, args, permssion });
+    } catch (e) {
+      console.error(`❌ Command error [${commandName}]`, e);
+    }
   });
 });
