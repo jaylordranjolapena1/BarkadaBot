@@ -1,38 +1,20 @@
 module.exports = {
   config: {
     name: "uid",
-    version: "2.0.0",
+    version: "2.1.0",
     hasPermssion: 0,
     credits: "BarkadaBot",
-    description: "Get Facebook UID",
+    description: "Get your Facebook UID",
     commandCategory: "Utility",
-    usages: "[mention/reply/userID]",
+    usages: "/uid",
     cooldowns: 2
   },
 
   run: async function ({ api, event }) {
-    const { threadID, messageID, senderID, body, messageReply } = event;
-
-    let targetID = senderID;
-
-    // 1️⃣ Reply = strongest signal
-    if (messageReply?.senderID) {
-      targetID = messageReply.senderID;
-    }
-
-    // 2️⃣ Raw mention extraction from message text
-    else {
-      // Messenger format: @Name (1000xxxxxxxxx)
-      const regex = /\((\d{6,})\)/g;
-      const matches = [...body.matchAll(regex)];
-
-      if (matches.length > 0) {
-        targetID = matches[0][1];
-      }
-    }
+    const { threadID, messageID, senderID } = event;
 
     return api.sendMessage(
-      `🆔 User ID:\n${targetID}`,
+      `🆔 Your Facebook User ID:\n${senderID}`,
       threadID,
       messageID
     );
