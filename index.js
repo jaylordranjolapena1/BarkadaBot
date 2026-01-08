@@ -42,7 +42,7 @@ global.utils = {
   }
 };
 
-// ================= USERS SYSTEM =================
+// ================= USERS =================
 global.Users = require("./utils/Users");
 
 // ================= LOAD COMMANDS =================
@@ -51,7 +51,6 @@ for (const file of fs.readdirSync(cmdPath)) {
   try {
     const cmd = require(path.join(cmdPath, file));
     if (!cmd.config?.name || !cmd.run) continue;
-
     global.client.commands.set(cmd.config.name, cmd);
     console.log(`✅ Command loaded: ${cmd.config.name}`);
   } catch (e) {
@@ -65,7 +64,6 @@ for (const file of fs.readdirSync(evPath)) {
   try {
     const ev = require(path.join(evPath, file));
     if (!ev.config?.name || !ev.run) continue;
-
     global.client.events.set(ev.config.name, ev);
     console.log(`🎯 Event loaded: ${ev.config.name}`);
   } catch (e) {
@@ -73,25 +71,9 @@ for (const file of fs.readdirSync(evPath)) {
   }
 }
 
-// ================= COMMAND HANDLER =================
+// ================= LOAD HANDLERS =================
+const eventHandler = require("./utils/eventHandler");
 const commandHandler = require("./utils/commandHandler");
-
-// ================= SINGLE EVENT ENGINE =================
-async function eventHandler({ api, event }) {
-  const realType = event.type;
-
-  console.log("📥 EVENT:", realType);
-
-  for (const ev of global.client.events.values()) {
-    if (!ev.config.eventType.includes(realType)) continue;
-
-    try {
-      await ev.run({ api, event });
-    } catch (err) {
-      console.error(`❌ Event error [${ev.config.name}]:`, err);
-    }
-  }
-}
 
 // ================= LOGIN =================
 login({ appState }, (err, api) => {
