@@ -1,10 +1,13 @@
 module.exports = async function ({ api, event }) {
-  const config = global.config;
   const client = global.client;
 
   if (!event || event.type !== "message" || !event.body) return;
 
-  const prefix = config.PREFIX || "/";
+  // ===== LOAD CONFIG SAFELY =====
+  delete require.cache[require.resolve(client.configPath)];
+  const config = require(client.configPath);
+
+  const prefix = config.prefix || "/";
   if (!event.body.startsWith(prefix)) return;
 
   const args = event.body.slice(prefix.length).trim().split(/\s+/);
@@ -20,14 +23,12 @@ module.exports = async function ({ api, event }) {
     );
   }
 
-  // ===== LIVE CONFIG RELOAD =====
-  delete require.cache[require.resolve(client.configPath)];
-  global.config = require(client.configPath);
-
-  const senderID = String(event.senderID);
-  const ADMINBOT = (global.config.ADMINBOT || []).map(String);
-
   // ===== PERMISSION SYSTEM =====
+  const senderID = String(event.senderID);
+
+  if (!Array.isArray(config.adminUIDs)) config.adminUIDs = [];
+  const ADMINBOT = config.adminUIDs.map(String);
+
   let permssion = ADMINBOT.includes(senderID) ? 2 : 0;
 
   if (command.config.hasPermssion > permssion) {
