@@ -1,16 +1,22 @@
-const { onData, getData } = require("../utils/database");
+const { onNewChat, getData } = require("../database");
+
+let lastKey = null;
 
 module.exports = async function () {
 
-  onData("chat", async (data) => {
+  onNewChat(async (key, data) => {
     if (!data || !data.message) return;
+
+    if (key === lastKey) return;
+    lastKey = key;
 
     const subs = await getData("ingamechat") || {};
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
 
-      global.api.sendMessage(`🎮 ${data.message}`, threadID);
+      const msg = `🎮 ${data.sender || "Player"}: ${data.message}`;
+      global.api.sendMessage(msg, threadID);
     }
   });
 
