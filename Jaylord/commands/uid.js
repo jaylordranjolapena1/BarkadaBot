@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: "uid",
-    version: "1.0.3",
+    version: "1.0.5",
     hasPermssion: 0,
     credits: "BarkadaBot",
     description: "Get user Facebook ID",
@@ -11,28 +11,23 @@ module.exports = {
   },
 
   run: async function ({ api, event, args }) {
-    const { threadID, messageID } = event;
+    const { threadID, messageID, senderID } = event;
 
-    let targetID;
+    let targetID = senderID;
 
-    // 1️⃣ If mention
-    if (event.mentions && Object.keys(event.mentions).length > 0) {
-      targetID = Object.keys(event.mentions)[0];
-    }
-
-    // 2️⃣ If reply
-    else if (event.messageReply && event.messageReply.senderID) {
+    // 1️⃣ Reply — pinaka reliable
+    if (event.messageReply && event.messageReply.senderID) {
       targetID = event.messageReply.senderID;
     }
 
-    // 3️⃣ If user typed ID
-    else if (args[0] && !isNaN(args[0])) {
-      targetID = args[0];
+    // 2️⃣ Mention — with fallback detection
+    else if (event.mentions && Object.keys(event.mentions).length > 0) {
+      targetID = Object.keys(event.mentions)[0];
     }
 
-    // 4️⃣ Default = sender
-    else {
-      targetID = event.senderID;
+    // 3️⃣ Manual ID
+    else if (args[0] && !isNaN(args[0])) {
+      targetID = args[0];
     }
 
     return api.sendMessage(
