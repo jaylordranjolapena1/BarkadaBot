@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "fca-smart-shankar": "latest",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0"
   }
 }
