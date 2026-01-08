@@ -102,13 +102,6 @@ login({ appState }, (err, api) => {
 
   console.log(`🤖 ${global.config.botName} is online`);
 
-  // 🔥 BOOT SYSTEM EVENTS
-for (const ev of global.client.events.values()) {
-  if (ev.config.eventType.includes("__BOOT__")) {
-    ev.run();
-  }
-}
-
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
 
