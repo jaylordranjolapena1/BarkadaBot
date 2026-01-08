@@ -1,9 +1,14 @@
 const { onChildAdded, getData } = require("../../database");
 
-let lastKey = null;
+module.exports.config = {
+  name: "ingamechat",
+  eventType: ["__BOOT__"]
+};
 
-module.exports = async function () {
-  console.log("🎧 IngameChat listener active");
+module.exports.run = async function () {
+  console.log("🎧 IngameChat listener mounted");
+
+  let lastKey = null;
 
   onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
@@ -18,8 +23,7 @@ module.exports = async function () {
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
 
-      const msg = `🎮 ${data.sender || "Player"}: ${data.message}`;
-      global.api.sendMessage(msg, threadID);
+      global.api.sendMessage(`🎮 ${data.sender || "Player"}: ${data.message}`, threadID);
     }
   });
 };
