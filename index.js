@@ -1,51 +1,48 @@
 const login = require("fca-smart-shankar");
 const fs = require("fs");
-const express = require("express");
+const path = require("path");
 
-const app = express();
-const PORT = process.env.PORT || 10000;
+const config = JSON.parse(fs.readFileSync("config.json"));
+const appState = JSON.parse(fs.readFileSync("appstate.json"));
 
-app.get("/", (req, res) => {
-  res.send("🤖 Barkada Bot is alive.");
-});
+const commands = new Map();
+const events = [];
 
-app.listen(PORT, () => {
-  console.log("Web server running on port " + PORT);
-});
+function loadCommands() {
+  const cmdPath = "./Jaylord/commands";
+  fs.readdirSync(cmdPath).forEach(file => {
+    const cmd = require(path.join(__dirname, cmdPath, file));
+    commands.set(cmd.name, cmd);
+  });
+}
 
-const appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
+function loadEvents() {
+  const eventPath = "./Jaylord/events";
+  fs.readdirSync(eventPath).forEach(file => {
+    events.push(require(path.join(__dirname, eventPath, file)));
+  });
+}
+
+loadCommands();
+loadEvents();
 
 login({ appState }, (err, api) => {
-  if (err) return console.error("LOGIN FAILED:", err);
+  if (err) return console.error(err);
 
-  api.setOptions({
-    listenEvents: true,
-    selfListen: false,
-    updatePresence: false,
-    forceLogin: true
-  });
-
-  console.log("🤖 Barkada Bot Fully Online!");
+  console.log(`${config.botName} is online!`);
 
   api.listenMqtt((err, event) => {
-    if (err) return console.error("Listener error:", err);
+    if (err) return console.error(err);
 
-    if (!event || !event.body || event.type !== "message") return;
+    if (event.type !== "message" || !event.body) return;
 
-    const message = event.body.trim().toLowerCase();
+    for (const ev of events) ev({ api, event, config });
 
-    console.log("📩 Message:", message);
+    if (!event.body.startsWith(config.prefix)) return;
 
-    if (message === "hi") {
-      api.sendMessage("Hello! Barkada Bot here 👋", event.threadID);
-    }
-
-    if (message === "ping") {
-      api.sendMessage("Pong! 🏓", event.threadID);
-    }
-
-    if (message === "help") {
-      api.sendMessage("Commands: hi, ping, help", event.threadID);
-    }
+    const args = event.body.slice(config.prefix.length).trim().split(/ +/);
+    const cmdName = args.shift().toLowerCase();
+    const cmd = commands.get(cmdName);
+    if (cmd) cmd.execute({ api, event, args, config });
   });
 });
