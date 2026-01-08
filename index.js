@@ -4,25 +4,34 @@ const login = require("fca-smart-shankar");
 const fs = require("fs-extra");
 const path = require("path");
 
-// ===== Load Config =====
+// ================= GLOBAL NODEMODULE =================
+global.nodemodule = {};
+const listPackage = JSON.parse(fs.readFileSync("./package.json")).dependencies || {};
+for (const name in listPackage) {
+  try {
+    global.nodemodule[name] = require(name);
+  } catch {}
+}
+
+// ================= LOAD CONFIG =================
 const configPath = path.join(__dirname, "config.json");
 global.config = require(configPath);
 const appState = require("./appstate.json");
 
-// ===== Global Client =====
+// ================= GLOBAL CLIENT =================
 global.client = {
   commands: new Map(),
   events: new Map(),
   configPath
 };
 
-// ===== Web Server =====
+// ================= WEB SERVER =================
 app.get("/", (req, res) => res.send("Barkada Bot is running"));
 app.listen(process.env.PORT || 3000, () => {
   console.log("🌐 Web server ready");
 });
 
-// ===== Utils =====
+// ================= UTILS =================
 global.utils = {
   throwError(cmd, threadID, messageID) {
     return global.api.sendMessage(
@@ -33,15 +42,15 @@ global.utils = {
   }
 };
 
-// ===== Users System =====
+// ================= USERS SYSTEM =================
 global.Users = require("./utils/Users");
 
-// ===== Load Commands =====
+// ================= LOAD COMMANDS =================
 const cmdPath = path.join(__dirname, "Jaylord/commands");
 for (const file of fs.readdirSync(cmdPath)) {
   try {
     const cmd = require(path.join(cmdPath, file));
-    if (!cmd.config || !cmd.config.name || !cmd.run) continue;
+    if (!cmd.config?.name || !cmd.run) continue;
 
     global.client.commands.set(cmd.config.name, cmd);
     console.log(`✅ Command loaded: ${cmd.config.name}`);
@@ -50,18 +59,15 @@ for (const file of fs.readdirSync(cmdPath)) {
   }
 }
 
-// ===== Load Events (FIXED) =====
+// ================= LOAD EVENTS =================
 const evPath = path.join(__dirname, "Jaylord/events");
-
 for (const file of fs.readdirSync(evPath)) {
   try {
     const ev = require(path.join(evPath, file));
     if (!ev.config?.eventType || !ev.run) continue;
 
     for (const type of ev.config.eventType) {
-      if (!global.client.events.has(type)) {
-        global.client.events.set(type, []);
-      }
+      if (!global.client.events.has(type)) global.client.events.set(type, []);
       global.client.events.get(type).push(ev);
     }
 
@@ -71,19 +77,28 @@ for (const file of fs.readdirSync(evPath)) {
   }
 }
 
-// ===== Handlers =====
+// ================= HANDLERS =================
 const commandHandler = require("./utils/commandHandler");
 const eventHandler = require("./utils/eventHandler");
 
-// ===== Login =====
+// ================= LOGIN =================
 login({ appState }, (err, api) => {
   if (err) return console.error(err);
   global.api = api;
 
-  console.log(`🤖 ${global.config.botName} is online`);
+  // 🔥 THIS LINE IS THE MISSING KEY
+  api.setOptions({
+    listenEvents: true,
+    updatePresence: true,
+    selfListen: false
+  });
+
+  console.log(`🤖 ${global.config.BOTNAME} is online`);
 
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
+
+    console.log("📥 EVENT:", event.type); // Debug
 
     try {
       await eventHandler({ api, event });
