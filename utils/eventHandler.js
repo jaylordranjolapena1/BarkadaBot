@@ -1,13 +1,12 @@
 module.exports = async function ({ api, event }) {
-  const type = event.logMessageType || event.type;
-  const handlers = global.client.events.get(type);
-  if (!handlers) return;
+  const events = global.client.events.get(event.type);
+  if (!events) return;
 
-  for (const ev of handlers) {
+  for (const ev of events) {
     try {
       await ev.run({ api, event });
     } catch (e) {
-      console.error("❌ Event error:", e);
+      console.error(`❌ Event error [${ev.config.name}]:`, e);
     }
   }
 };
