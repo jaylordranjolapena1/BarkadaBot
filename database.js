@@ -11,6 +11,8 @@ if (!admin.apps.length) {
 
 const db = admin.database();
 
+// ===== BASIC FUNCTIONS =====
+
 async function getData(path) {
   const snap = await db.ref(path).once("value");
   return snap.val();
@@ -24,4 +26,17 @@ async function deleteData(path) {
   await db.ref(path).remove();
 }
 
-module.exports = { getData, setData, deleteData };
+// ===== REALTIME LISTENER (🔥 MISSING PART) =====
+
+function onChildAdded(path, callback) {
+  db.ref(path).limitToLast(1).on("child_added", snap => {
+    callback(snap.key, snap.val());
+  });
+}
+
+module.exports = {
+  getData,
+  setData,
+  deleteData,
+  onChildAdded
+};
