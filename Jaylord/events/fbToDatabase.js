@@ -1,4 +1,4 @@
-const { pushData, getData } = require("../../database");
+const { setData, getData } = require("../../database");
 
 console.log("🔥 fbToDatabase LOADED");
 
@@ -13,11 +13,10 @@ module.exports.run = async function ({ api, event }) {
 
   const threadID = event.threadID;
 
-  // 🔎 Check if ingame chat is enabled in this GC
+  // 🔎 GC toggle check
   const enabled = await getData(`ingamechat/${threadID}`);
   console.log("📦 IngameChat:", threadID, "=", enabled);
 
-  // 🛡 Safe truth check
   if (!enabled || enabled === "false" || enabled === 0) return;
 
   const msg = event.body.trim();
@@ -34,7 +33,9 @@ module.exports.run = async function ({ api, event }) {
     threadID
   };
 
-  await pushData("chat", data);
+  // 💉 FORCE WRITE — same method that worked before
+  const key = "chat/" + Date.now();
+  await setData(key, data);
 
   console.log("🌐 FB → DB:", msg);
 };
