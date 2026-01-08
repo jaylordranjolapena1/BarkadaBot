@@ -1,3 +1,5 @@
+const express = require("express");
+const app = express();
 const login = require("fca-smart-shankar");
 const fs = require("fs");
 const path = require("path");
@@ -7,6 +9,9 @@ const appState = JSON.parse(fs.readFileSync("appstate.json"));
 
 const commands = new Map();
 const events = [];
+
+app.get("/", (req, res) => res.send("Barkada Bot is running"));
+app.listen(process.env.PORT || 3000);
 
 function loadCommands() {
   const cmdPath = "./Jaylord/commands";
