@@ -11,6 +11,7 @@ module.exports = async function ({ api, event }) {
   const commandName = args.shift().toLowerCase();
   const command = client.commands.get(commandName);
 
+  // ===== UNKNOWN COMMAND =====
   if (!command) {
     return api.sendMessage(
       `❓ Unknown command: ${prefix}${commandName}`,
@@ -19,12 +20,14 @@ module.exports = async function ({ api, event }) {
     );
   }
 
+  // ===== LIVE CONFIG RELOAD =====
   delete require.cache[require.resolve(client.configPath)];
   global.config = require(client.configPath);
 
   const senderID = String(event.senderID);
   const ADMINBOT = (global.config.ADMINBOT || []).map(String);
 
+  // ===== PERMISSION SYSTEM =====
   let permssion = ADMINBOT.includes(senderID) ? 2 : 0;
 
   if (command.config.hasPermssion > permssion) {
@@ -35,6 +38,20 @@ module.exports = async function ({ api, event }) {
     );
   }
 
+  // ===== AUTO USAGE CHECK =====
+  if (
+    command.config.usages &&
+    args.length === 0 &&
+    command.config.usages.includes("[")
+  ) {
+    return api.sendMessage(
+      `📌 Usage:\n${prefix}${commandName} ${command.config.usages}`,
+      event.threadID,
+      event.messageID
+    );
+  }
+
+  // ===== COOLDOWN SYSTEM =====
   const now = Date.now();
   const cd = command.config.cooldowns || 0;
 
@@ -49,16 +66,36 @@ module.exports = async function ({ api, event }) {
 
     if (now < expire) {
       const left = Math.ceil((expire - now) / 1000);
-      return api.sendMessage(`⏳ Cooldown: ${left}s`, event.threadID, event.messageID);
+      return api.sendMessage(
+        `⏳ Cooldown: ${left}s`,
+        event.threadID,
+        event.messageID
+      );
     }
 
     timestamps.set(senderID, now + cd * 1000);
   }
 
+  // ===== EXECUTE COMMAND =====
   try {
     await command.run({ api, event, args, permssion, Users: global.Users });
   } catch (e) {
     console.error(`❌ Command error [${commandName}]`, e);
-    api.sendMessage("⚠️ May error sa command.", event.threadID);
+
+    const usage = command.config?.usages;
+
+    if (usage) {
+      return api.sendMessage(
+        `❌ Error while executing command.\n\n📌 Usage:\n${prefix}${commandName} ${usage}`,
+        event.threadID,
+        event.messageID
+      );
+    }
+
+    return api.sendMessage(
+      "⚠️ May error sa command.",
+      event.threadID,
+      event.messageID
+    );
   }
 };
