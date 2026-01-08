@@ -59,7 +59,7 @@ for (const file of fs.readdirSync(cmdPath)) {
   }
 }
 
-// ================= LOAD EVENTS (FIXED ENGINE) =================
+// ================= LOAD EVENTS =================
 const evPath = path.join(__dirname, "Jaylord/events");
 for (const file of fs.readdirSync(evPath)) {
   try {
@@ -76,10 +76,14 @@ for (const file of fs.readdirSync(evPath)) {
 // ================= HANDLERS =================
 const commandHandler = require("./utils/commandHandler");
 
-// 🔥 REAL MIRAI EVENT HANDLER (INLINE, NO CONFLICT)
+// 🧠 FIXED EVENT ENGINE — uses ONLY event.type
 async function eventHandler({ api, event }) {
+  const realType = event.type;
+
+  console.log("📥 EVENT:", realType); // Debug & stable
+
   for (const ev of global.client.events.values()) {
-    if (!ev.config.eventType.includes(event.logMessageType || event.type)) continue;
+    if (!ev.config.eventType.includes(realType)) continue;
 
     try {
       await ev.run({ api, event });
@@ -103,16 +107,14 @@ login({ appState }, (err, api) => {
   console.log(`🤖 ${global.config.botName} is online`);
 
   // 🔥 BOOT SYSTEM EVENTS
-for (const ev of global.client.events.values()) {
-  if (ev.config.eventType.includes("__BOOT__")) {
-    ev.run();
+  for (const ev of global.client.events.values()) {
+    if (ev.config.eventType.includes("__BOOT__")) {
+      ev.run();
+    }
   }
-}
 
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
-
-    console.log("📥 EVENT:", event.logMessageType || event.type);
 
     try {
       await eventHandler({ api, event });
