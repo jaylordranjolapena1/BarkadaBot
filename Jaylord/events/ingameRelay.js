@@ -1,4 +1,4 @@
-const { onChildAdded, getData } = require("../database");
+const { onChildAdded, getData } = require("../../database");
 
 let lastKey = null;
 
