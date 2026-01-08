@@ -73,14 +73,14 @@ for (const file of fs.readdirSync(evPath)) {
   }
 }
 
-// ================= HANDLERS =================
+// ================= COMMAND HANDLER =================
 const commandHandler = require("./utils/commandHandler");
 
-// 🧠 FIXED EVENT ENGINE — uses ONLY event.type
+// ================= SINGLE EVENT ENGINE =================
 async function eventHandler({ api, event }) {
   const realType = event.type;
 
-  console.log("📥 EVENT:", realType); // Debug & stable
+  console.log("📥 EVENT:", realType);
 
   for (const ev of global.client.events.values()) {
     if (!ev.config.eventType.includes(realType)) continue;
@@ -106,7 +106,7 @@ login({ appState }, (err, api) => {
 
   console.log(`🤖 ${global.config.botName} is online`);
 
-  // 🔥 BOOT SYSTEM EVENTS
+  // 🔥 BOOT EVENTS
   for (const ev of global.client.events.values()) {
     if (ev.config.eventType.includes("__BOOT__")) {
       ev.run();
