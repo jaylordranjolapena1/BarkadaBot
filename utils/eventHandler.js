@@ -1,5 +1,6 @@
 module.exports = async function ({ api, event }) {
-  const handlers = global.client.events.get(event.type);
+  const type = event.logMessageType || event.type;
+  const handlers = global.client.events.get(type);
   if (!handlers) return;
 
   for (const ev of handlers) {
