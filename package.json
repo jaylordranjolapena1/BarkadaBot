@@ -6,7 +6,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "fca-smart-shankar": "latest",
+    "fca-smart-shankar": "1.3.2",
     "express": "^4.19.2",
     "fs-extra": "^11.2.0",
     "axios": "^1.6.8",
