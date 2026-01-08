@@ -81,16 +81,11 @@ module.exports.run = async function ({ api, event }) {
         console.log("⚠️ Welcome image failed, sending text only.");
       }
 
-      // 📨 SEND WELCOME MESSAGE (SAFE)
+      // 📨 SEND WELCOME MESSAGE
       const msgData = { body: message, mentions: [{ tag: userName, id: userID }] };
 
-      if (fs.existsSync(imgPath)) {
-        try {
-          const stats = fs.statSync(imgPath);
-          if (stats.size > 0) {
-            msgData.attachment = fs.createReadStream(imgPath);
-          }
-        } catch {}
+      if (fs.existsSync(imgPath) && fs.statSync(imgPath).size > 0) {
+        msgData.attachment = fs.createReadStream(imgPath);
       }
 
       await new Promise(resolve => {
@@ -100,14 +95,14 @@ module.exports.run = async function ({ api, event }) {
         });
       });
 
-      // 🎥 SEND VIDEO IF ENABLED (SAFE)
+      // 🎥 SAFE VIDEO SYSTEM (NO MORE CRASH)
       if (!videoEnabled) continue;
       await new Promise(r => setTimeout(r, 3000));
 
       try {
         const res = await axios.get(videoApi, { timeout: 15000 });
         const videoUrl = res?.data?.shotiurl;
-        if (!videoUrl) continue;
+        if (!videoUrl) throw new Error("No video URL");
 
         const stream = await axios({ url: videoUrl, responseType: "stream", timeout: 30000 });
 
@@ -118,23 +113,22 @@ module.exports.run = async function ({ api, event }) {
           writer.on("error", reject);
         });
 
-        const videoMsg = { body: `🎥 Welcome video for you, ${userName}!` };
+        if (!fs.existsSync(videoPath)) throw new Error("Video missing");
 
-        if (fs.existsSync(videoPath)) {
-          try {
-            const stats = fs.statSync(videoPath);
-            if (stats.size > 0) {
-              videoMsg.attachment = fs.createReadStream(videoPath);
-            }
-          } catch {}
-        }
+        const stats = fs.statSync(videoPath);
+        if (!stats || stats.size < 10000) throw new Error("Broken video file");
 
-        api.sendMessage(videoMsg, threadID, () => {
-          if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+        await new Promise(resolve => {
+          api.sendMessage({
+            body: `🎥 Welcome video for you, ${userName}!`,
+            attachment: fs.createReadStream(videoPath)
+          }, threadID, resolve);
         });
 
+        fs.unlinkSync(videoPath);
+
       } catch (e) {
-        console.log("⚠️ Video failed:", e.message);
+        console.log("⚠️ Video skipped:", e.message);
       }
     }
 
