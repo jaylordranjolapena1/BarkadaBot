@@ -1,4 +1,4 @@
-const { onNewChat, getData } = require("../database");
+const { onNewChat, getData } = require("../../database");
 
 let lastKey = null;
 
