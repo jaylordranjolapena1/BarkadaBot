@@ -19,11 +19,15 @@ async function getData(path) {
 }
 
 async function setData(path, value) {
-  await db.ref(path).set(value);
+  return db.ref(path).set(value);
+}
+
+async function pushData(path, value) {
+  return db.ref(path).push(value);
 }
 
 async function deleteData(path) {
-  await db.ref(path).remove();
+  return db.ref(path).remove();
 }
 
 // ===== REALTIME LISTENER =====
@@ -37,6 +41,7 @@ function onChildAdded(path, callback) {
 module.exports = {
   getData,
   setData,
+  pushData,
   deleteData,
   onChildAdded
 };
