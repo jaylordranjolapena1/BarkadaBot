@@ -1,4 +1,4 @@
-const { pushData, getData } = require("../../database.js");
+const { pushData, getData } = require("../../database");
 
 module.exports.config = {
   name: "fbToDatabase",
@@ -12,11 +12,10 @@ module.exports.run = async function ({ api, event }) {
 
   const threadID = event.threadID;
 
-  // 🔒 Check kung enabled sa GC
   const enabled = await getData(`ingamechat/${threadID}`);
-  if (!enabled) return;
+  console.log("CHAT TO DB ENABLED:", enabled, typeof enabled);
+  if (enabled !== true) return;
 
-  // 🛑 Prevent echo loop
   if (event.fromGameRelay) return;
 
   const msg = event.body.trim();
