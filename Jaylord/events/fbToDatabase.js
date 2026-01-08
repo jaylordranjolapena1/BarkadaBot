@@ -13,10 +13,12 @@ module.exports.run = async function ({ api, event }) {
 
   const threadID = event.threadID;
 
+  // 🔎 Check if ingame chat is enabled in this GC
   const enabled = await getData(`ingamechat/${threadID}`);
   console.log("📦 IngameChat:", threadID, "=", enabled);
 
-  if (enabled !== true) return;
+  // 🛡 Safe truth check
+  if (!enabled || enabled === "false" || enabled === 0) return;
 
   const msg = event.body.trim();
   if (!msg) return;
