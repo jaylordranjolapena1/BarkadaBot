@@ -26,7 +26,7 @@ async function deleteData(path) {
   await db.ref(path).remove();
 }
 
-// ===== REALTIME LISTENER (🔥 MISSING PART) =====
+// ===== REALTIME LISTENER =====
 
 function onChildAdded(path, callback) {
   db.ref(path).limitToLast(1).on("child_added", snap => {
