@@ -38,17 +38,16 @@ module.exports = async function ({ api, event }) {
     );
   }
 
-  // ===== AUTO USAGE SYSTEM =====
-  if (
-    command.config.usages &&
-    args.length === 0 &&
-    command.config.usages.includes("[")
-  ) {
-    return api.sendMessage(
-      `📌 Usage:\n${prefix}${commandName} ${command.config.usages}`,
-      event.threadID,
-      event.messageID
-    );
+  // ===== SMART AUTO USAGE SYSTEM (FIXED) =====
+  if (command.config.usages) {
+    const needArgs = command.config.usages.includes("[");
+    if (needArgs && args.length === 0) {
+      return api.sendMessage(
+        `📌 Usage:\n${prefix}${commandName} ${command.config.usages}`,
+        event.threadID,
+        event.messageID
+      );
+    }
   }
 
   // ===== COOLDOWN SYSTEM =====
