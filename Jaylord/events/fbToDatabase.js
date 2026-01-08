@@ -1,4 +1,4 @@
-const { pushData, getData } = require("../../database");
+const { pushData, getData } = require("../../database.js");
 
 module.exports.config = {
   name: "fbToDatabase",
