@@ -10,47 +10,75 @@ module.exports = async function ({ api, event }) {
   const args = event.body.slice(prefix.length).trim().split(/\s+/);
   const commandName = args.shift().toLowerCase();
   const command = client.commands.get(commandName);
-  if (!command) return;
 
-  // Reload config live
+  // ===== UNKNOWN COMMAND =====
+  if (!command) {
+    return api.sendMessage(
+      `❓ Unknown command: ${prefix}${commandName}`,
+      event.threadID,
+      event.messageID
+    );
+  }
+
+  // ===== LIVE CONFIG RELOAD =====
   delete require.cache[require.resolve(client.configPath)];
   global.config = require(client.configPath);
 
   const senderID = String(event.senderID);
   const ADMINBOT = (global.config.ADMINBOT || []).map(String);
 
-  // ===== FIXED PERMISSION SYSTEM =====
+  // ===== PERMISSION SYSTEM =====
   let permssion = ADMINBOT.includes(senderID) ? 2 : 0;
-  if (typeof permssion !== "number") permssion = 0;
 
-  // Debug log (you can remove later)
-  console.log("[PERMISSION]", senderID, permssion);
+  if (command.config.hasPermssion > permssion) {
+    return api.sendMessage(
+      `⛔ You don't have permission to use "${commandName}"`,
+      event.threadID,
+      event.messageID
+    );
+  }
+
+  // ===== AUTO USAGE SYSTEM =====
+  if (
+    command.config.usages &&
+    args.length === 0 &&
+    command.config.usages.includes("[")
+  ) {
+    return api.sendMessage(
+      `📌 Usage:\n${prefix}${commandName} ${command.config.usages}`,
+      event.threadID,
+      event.messageID
+    );
+  }
 
   // ===== COOLDOWN SYSTEM =====
   const now = Date.now();
   const cd = command.config.cooldowns || 0;
 
   if (!global.cooldowns) global.cooldowns = new Map();
+  if (!global.cooldowns.has(commandName)) {
+    global.cooldowns.set(commandName, new Map());
+  }
 
   if (cd > 0) {
-    if (!global.cooldowns.has(commandName)) {
-      global.cooldowns.set(commandName, new Map());
-    }
-
     const timestamps = global.cooldowns.get(commandName);
     const expire = timestamps.get(senderID) || 0;
 
     if (now < expire) {
       const left = Math.ceil((expire - now) / 1000);
-      return api.sendMessage(`⏳ Cooldown: ${left}s`, event.threadID);
+      return api.sendMessage(
+        `⏳ Cooldown: ${left}s`,
+        event.threadID,
+        event.messageID
+      );
     }
 
     timestamps.set(senderID, now + cd * 1000);
   }
 
-  // ===== RUN COMMAND =====
+  // ===== EXECUTE COMMAND =====
   try {
-    await command.run({ api, event, args, permssion });
+    await command.run({ api, event, args, permssion, Users: global.Users });
   } catch (e) {
     console.error(`❌ Command error [${commandName}]`, e);
     api.sendMessage("⚠️ May error sa command.", event.threadID);
