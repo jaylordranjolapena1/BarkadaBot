@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     name: "uid",
-    version: "1.1.0",
+    version: "1.1.5",
     hasPermssion: 0,
     credits: "BarkadaBot",
     description: "Get Facebook UID",
@@ -10,27 +10,30 @@ module.exports = {
     cooldowns: 2
   },
 
-  run: async function ({ api, event, args }) {
-    const { threadID, messageID, body, senderID } = event;
+  run: async function ({ api, event }) {
+    const { threadID, messageID, senderID, body } = event;
 
     let targetID = senderID;
 
-    // 1️⃣ Reply (most accurate)
+    // 1️⃣ Reply (perfect)
     if (event.messageReply?.senderID) {
       targetID = event.messageReply.senderID;
     }
 
-    // 2️⃣ Real mention parsing from message body
-    else {
-      const match = body.match(/@.+?\((\d+)\)/);
-      if (match && match[1]) {
-        targetID = match[1];
-      }
+    // 2️⃣ True mention detection
+    else if (event.mentions && Object.keys(event.mentions).length > 0) {
+      const mentionKeys = Object.keys(event.mentions)
+        .filter(id => id !== senderID); // remove self bug
 
-      // 3️⃣ Manual ID
-      else if (args[0] && /^\d+$/.test(args[0])) {
-        targetID = args[0];
+      if (mentionKeys.length > 0) {
+        targetID = mentionKeys[0];
       }
+    }
+
+    // 3️⃣ Fallback: extract from text
+    else {
+      const match = body.match(/\((\d{5,})\)/);
+      if (match) targetID = match[1];
     }
 
     return api.sendMessage(
