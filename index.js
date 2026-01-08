@@ -16,7 +16,7 @@ global.client = {
   configPath
 };
 
-// ===== Web Server (Render Fix) =====
+// ===== Web Server =====
 app.get("/", (req, res) => res.send("Barkada Bot is running"));
 app.listen(process.env.PORT || 3000, () => {
   console.log("🌐 Web server ready");
@@ -33,7 +33,7 @@ global.utils = {
   }
 };
 
-// ===== Load Users System =====
+// ===== Users System =====
 global.Users = require("./utils/Users");
 
 // ===== Load Commands =====
@@ -50,14 +50,21 @@ for (const file of fs.readdirSync(cmdPath)) {
   }
 }
 
-// ===== Load Events =====
+// ===== Load Events (FIXED) =====
 const evPath = path.join(__dirname, "Jaylord/events");
+
 for (const file of fs.readdirSync(evPath)) {
   try {
     const ev = require(path.join(evPath, file));
-    if (!ev.config || !ev.config.name || !ev.run) continue;
+    if (!ev.config?.eventType || !ev.run) continue;
 
-    global.client.events.set(ev.config.name, ev);
+    for (const type of ev.config.eventType) {
+      if (!global.client.events.has(type)) {
+        global.client.events.set(type, []);
+      }
+      global.client.events.get(type).push(ev);
+    }
+
     console.log(`🎯 Event loaded: ${ev.config.name}`);
   } catch (e) {
     console.log(`❌ Event error: ${file}`, e.message);
@@ -73,7 +80,7 @@ login({ appState }, (err, api) => {
   if (err) return console.error(err);
   global.api = api;
 
-  console.log(`🤖 ${global.config.BOTNAME} is online`);
+  console.log(`🤖 ${global.config.botName} is online`);
 
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
