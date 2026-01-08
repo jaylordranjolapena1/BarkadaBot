@@ -8,6 +8,9 @@
   "dependencies": {
     "fca-smart-shankar": "latest",
     "express": "^4.19.2",
-    "fs-extra": "^11.2.0"
+    "fs-extra": "^11.2.0",
+    "axios": "^1.6.8",
+    "request": "^2.88.2",
+    "firebase-admin": "^12.0.0"
   }
 }
