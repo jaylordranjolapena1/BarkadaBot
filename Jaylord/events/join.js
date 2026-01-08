@@ -3,7 +3,7 @@ const { getData } = require("../../database.js");
 module.exports.config = {
   name: "joinNoti",
   eventType: ["log:subscribe"],
-  version: "2.0.2",
+  version: "2.0.3",
   credits: "Kim Joseph DG Bien + ChatGPT + Jaylord La Peña",
   description: "Join Notification with welcome image and optional video",
   dependencies: {
@@ -20,11 +20,11 @@ module.exports.run = async function ({ api, event }) {
   const path = require("path");
 
   const { threadID, logMessageData } = event;
-  if (!threadID || !logMessageData || !logMessageData.addedParticipants) return;
+  if (!threadID || !logMessageData?.addedParticipants) return;
 
   const addedParticipants = logMessageData.addedParticipants;
 
-  // 🤖 BOT ADDED
+  // 🤖 BOT ADDED — ALWAYS ALLOWED
   if (addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
     api.changeNickname(
       `𝗕𝗢𝗧 ${global.config.botName} 【 ${global.config.prefix} 】`,
@@ -36,6 +36,10 @@ module.exports.run = async function ({ api, event }) {
       threadID
     );
   }
+
+  // 🧭 PER-GC WELCOME TOGGLE (normal users only)
+  const welcomeEnabled = await getData(`welcomeMessage/${threadID}`);
+  if (welcomeEnabled === false) return;
 
   try {
     const threadInfo = await api.getThreadInfo(threadID);
@@ -77,9 +81,7 @@ module.exports.run = async function ({ api, event }) {
             .on("close", resolve)
             .on("error", reject);
         });
-      } catch {
-        console.log("⚠️ Welcome image failed, sending text only.");
-      }
+      } catch {}
 
       // 📨 SEND WELCOME MESSAGE
       const msgData = { body: message, mentions: [{ tag: userName, id: userID }] };
@@ -95,7 +97,7 @@ module.exports.run = async function ({ api, event }) {
         });
       });
 
-      // 🎥 SAFE VIDEO SYSTEM (NO MORE CRASH)
+      // 🎥 SAFE VIDEO SYSTEM
       if (!videoEnabled) continue;
       await new Promise(r => setTimeout(r, 3000));
 
@@ -113,10 +115,8 @@ module.exports.run = async function ({ api, event }) {
           writer.on("error", reject);
         });
 
-        if (!fs.existsSync(videoPath)) throw new Error("Video missing");
-
         const stats = fs.statSync(videoPath);
-        if (!stats || stats.size < 10000) throw new Error("Broken video file");
+        if (!stats || stats.size < 10000) throw new Error("Broken video");
 
         await new Promise(resolve => {
           api.sendMessage({
