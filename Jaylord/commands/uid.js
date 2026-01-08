@@ -6,7 +6,7 @@ module.exports = {
     credits: "ChatGPT",
     description: "Show Facebook user ID",
     commandCategory: "Utility",
-    usages: "/uid [mention/reply/userID]",
+    usages: "[mention/reply/userID]",
     cooldowns: 2
   },
 
