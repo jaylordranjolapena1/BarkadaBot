@@ -44,3 +44,4 @@ module.exports = async function ({ api, event }) {
     console.error(`❌ Command error [${commandName}]`, e);
   }
 };
+
