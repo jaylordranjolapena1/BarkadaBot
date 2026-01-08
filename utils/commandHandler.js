@@ -1,4 +1,4 @@
-module.exports = async function ({ api, event }) {
+module.exports = async function ({ api, event, Users }) {
   const config = global.config;
   const client = global.client;
 
@@ -20,7 +20,7 @@ module.exports = async function ({ api, event }) {
   const ADMINBOT = global.config.ADMINBOT || [];
   let permssion = ADMINBOT.includes(senderID) ? 2 : 0;
 
-  // Cooldown
+  // ===== Cooldown System =====
   const now = Date.now();
   const cd = command.config.cooldowns || 0;
   if (!global.cooldowns) global.cooldowns = new Map();
@@ -39,8 +39,9 @@ module.exports = async function ({ api, event }) {
   }
 
   try {
-    await command.run({ api, event, args, permssion });
+    await command.run({ api, event, args, permssion, Users });
   } catch (e) {
     console.error(`❌ Command error [${commandName}]`, e);
+    api.sendMessage("⚠️ May error sa command.", event.threadID);
   }
 };
