@@ -3,10 +3,10 @@ const fs = require("fs");
 const express = require("express");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 
 app.get("/", (req, res) => {
-  res.send("🤖 Barkada Bot is running.");
+  res.send("🤖 Barkada Bot is alive.");
 });
 
 app.listen(PORT, () => {
@@ -16,10 +16,7 @@ app.listen(PORT, () => {
 const appState = JSON.parse(fs.readFileSync("appstate.json", "utf8"));
 
 login({ appState }, (err, api) => {
-  if (err) {
-    console.error("LOGIN FAILED:", err);
-    return;
-  }
+  if (err) return console.error("LOGIN FAILED:", err);
 
   api.setOptions({
     listenEvents: true,
@@ -31,25 +28,24 @@ login({ appState }, (err, api) => {
   console.log("🤖 Barkada Bot Fully Online!");
 
   api.listenMqtt((err, event) => {
-    if (err) return console.error(err);
+    if (err) return console.error("Listener error:", err);
 
-    if (event.type === "message") {
-      const msg = event.body?.toLowerCase();
+    if (!event || !event.body || event.type !== "message") return;
 
-      if (msg === "hi") {
-        api.sendMessage("Hello! Barkada Bot here 👋", event.threadID);
-      }
+    const message = event.body.trim().toLowerCase();
 
-      if (msg === "ping") {
-        api.sendMessage("Pong! 🏓", event.threadID);
-      }
+    console.log("📩 Message:", message);
 
-      if (msg === "help") {
-        api.sendMessage(
-          "Commands:\nhi\nping\nhelp",
-          event.threadID
-        );
-      }
+    if (message === "hi") {
+      api.sendMessage("Hello! Barkada Bot here 👋", event.threadID);
+    }
+
+    if (message === "ping") {
+      api.sendMessage("Pong! 🏓", event.threadID);
+    }
+
+    if (message === "help") {
+      api.sendMessage("Commands: hi, ping, help", event.threadID);
     }
   });
 });
