@@ -93,7 +93,7 @@ login({ appState }, (err, api) => {
     selfListen: false
   });
 
-  console.log(`🤖 ${global.config.BOTNAME} is online`);
+  console.log(`🤖 ${global.config.botName} is online`);
 
   api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
