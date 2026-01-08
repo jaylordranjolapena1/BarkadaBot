@@ -1,34 +1,30 @@
 module.exports.config = {
   name: "uid",
-  version: "1.0.0",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "ChatGPT",
-  description: "Get Facebook user ID",
+  description: "Show Facebook user ID",
   commandCategory: "Utility",
-  usages: "/uid [mention/reply/userID]",
+  usages: "[mention/reply/userID]",
   cooldowns: 3
 };
 
 module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID, senderID, mentions, messageReply } = event;
 
-  let targetID;
+  let targetID = senderID;
 
-  // If mention
-  if (Object.keys(mentions).length > 0) {
+  // If user mentioned someone
+  if (mentions && Object.keys(mentions).length > 0) {
     targetID = Object.keys(mentions)[0];
   }
-  // If reply
-  else if (messageReply) {
+  // If replying to someone
+  else if (messageReply && messageReply.senderID) {
     targetID = messageReply.senderID;
   }
-  // If argument is ID
+  // If user typed an ID
   else if (args[0] && !isNaN(args[0])) {
     targetID = args[0];
-  }
-  // Default to sender
-  else {
-    targetID = senderID;
   }
 
   return api.sendMessage(
