@@ -1,4 +1,4 @@
-const { onChildAdded, getData } = require("../../database");
+const { onChildAdded, onValue, getData } = require("../../database");
 
 module.exports.config = {
   name: "ingamechat",
@@ -6,38 +6,36 @@ module.exports.config = {
 };
 
 module.exports.run = async function () {
-  console.log("🎧 IngameChat listener mounted");
+  console.log("🎧 IngameChat + Status listener mounted");
 
   let lastChatKey = null;
   let lastPlayers = null;
 
-  // ================= GAME CHAT =================
+  // ================= CHAT RELAY =================
   onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
 
-    if (data.source === "facebook") return;
-
     if (key === lastChatKey) return;
     lastChatKey = key;
+
+    // 🚫 Ignore Facebook to prevent echo
+    if (data.source === "facebook") return;
 
     const subs = await getData("ingamechat") || {};
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
-      try {
-        await global.api.sendMessage(
-          `🎮 ${data.sender || "Player"}: ${data.message}`,
-          threadID
-        );
-      } catch {}
+
+      await global.api.sendMessage(
+        `🎮 ${data.sender || "Player"}: ${data.message}`,
+        threadID
+      );
     }
   });
 
-  // ================= PLAYER MONITOR =================
-  onChildAdded("status", async (key, value) => {
-    if (key !== "players") return;
-
-    const players = Number(value);
+  // ================= STATUS MONITOR =================
+  onValue("status/players", async (players) => {
+    players = Number(players);
     if (isNaN(players)) return;
 
     if (players === lastPlayers) return;
@@ -61,9 +59,7 @@ module.exports.run = async function () {
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
-      try {
-        await global.api.sendMessage(msg, threadID);
-      } catch {}
+      await global.api.sendMessage(msg, threadID);
     }
   });
 };
