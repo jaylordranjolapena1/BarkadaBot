@@ -16,7 +16,7 @@ module.exports.run = async function ({ api, event }) {
   const enabled = await getData(`ingamechat/${threadID}`);
   console.log("📦 IngameChat:", threadID, "=", enabled);
 
-  if (enabled !== true) return;
+  if (!enabled) return;   // 🔧 FIXED
 
   const msg = event.body.trim();
   if (!msg) return;
