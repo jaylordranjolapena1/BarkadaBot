@@ -8,48 +8,48 @@ module.exports.config = {
 module.exports.run = async function () {
   console.log("🎧 IngameChat + Status listener mounted");
 
-  let lastChatKey = null;
+  let lastChatKey = "";
   let lastPlayers = null;
 
-  // ================= CHAT RELAY =================
-  onChildAdded("chat", async (key, data) => {
-    if (!data || !data.message) return;
+  // Delay start to allow DB connection
+  setTimeout(() => {
 
-    if (key === lastChatKey) return;
-    lastChatKey = key;
-
-    // Prevent echo
-    if (data.source === "facebook") return;
-
-    const subs = await getData("ingamechat") || {};
-
-    for (const threadID in subs) {
-      if (!subs[threadID]) continue;
-
+    // ========== CHAT RELAY ==========
+    onChildAdded("chat", async (key, data) => {
       try {
-        await global.api.sendMessage(
-          `🎮 ${data.sender || "Player"}: ${data.message}`,
-          threadID
-        );
-      } catch {}
-    }
-  });
+        if (!data || !data.message) return;
+        if (key === lastChatKey) return;
+        lastChatKey = key;
 
-  // ================= STATUS MONITOR =================
-  onChildAdded("status", async (key, value) => {
-    if (key !== "players") return;
+        if (data.source === "facebook") return;
 
-    const players = Number(value);
-    if (isNaN(players)) return;
+        const subs = await getData("ingamechat") || {};
+        for (const threadID in subs) {
+          if (!subs[threadID]) continue;
+          await global.api.sendMessage(
+            `🎮 ${data.sender || "Player"}: ${data.message}`,
+            threadID
+          );
+        }
+      } catch (e) {
+        console.log("CHAT RELAY ERROR:", e.message);
+      }
+    });
 
-    // Send only when player count changes
-    if (players === lastPlayers) return;
-    lastPlayers = players;
+    // ========== STATUS MONITOR ==========
+    onChildAdded("status", async (key, value) => {
+      try {
+        if (key !== "players") return;
 
-    const status = await getData("status");
-    if (!status) return;
+        const players = Number(value);
+        if (isNaN(players)) return;
+        if (players === lastPlayers) return;
+        lastPlayers = players;
 
-    const msg =
+        const status = await getData("status");
+        if (!status) return;
+
+        const msg =
 `🧾 SERVER STATUS
 ━━━━━━━━━━━━━━━
 👥 Players: ${status.players}/${status.max}
@@ -60,13 +60,15 @@ module.exports.run = async function () {
 🟢 Online: ${status.online ? "YES" : "NO"}
 🕒 Updated: ${new Date(status.time).toLocaleTimeString()}`;
 
-    const subs = await getData("ingamechat") || {};
+        const subs = await getData("ingamechat") || {};
+        for (const threadID in subs) {
+          if (!subs[threadID]) continue;
+          await global.api.sendMessage(msg, threadID);
+        }
+      } catch (e) {
+        console.log("STATUS ERROR:", e.message);
+      }
+    });
 
-    for (const threadID in subs) {
-      if (!subs[threadID]) continue;
-      try {
-        await global.api.sendMessage(msg, threadID);
-      } catch {}
-    }
-  });
+  }, 4000); // <— VERY IMPORTANT
 };
