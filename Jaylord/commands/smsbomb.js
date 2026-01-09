@@ -2,10 +2,10 @@ const axios = require("axios");
 
 module.exports.config = {
   name: "smsbomb",
-  version: "1.1.0",
+  version: "1.2.0",
   credits: "ChatGPT + Barkada",
   description: "Send message via external API (Admin only)",
-  usage: "<number> [amount]",
+  usage: "/smsbomb <number> [amount]",
   cooldown: 5
 };
 
@@ -15,30 +15,27 @@ module.exports.run = async function ({ api, event, args }) {
   // 🛡 BOT ADMIN CHECK
   const admins = global.config.adminUIDs || [];
   if (!admins.includes(senderID)) {
-    return api.sendMessage(
-      "⛔ This command is restricted to bot administrators only.",
-      threadID
-    );
+    return api.sendMessage("⛔ This command is restricted to bot administrators only.", threadID);
   }
 
   if (!args[0]) {
     return api.sendMessage("Usage: /smsbomb <number> [amount]", threadID);
   }
 
-  const number = args[0];
-  const amount = args[1] || 1;
+  // 🧹 Clean & normalize number
+  let number = args[0].replace(/[^0-9]/g, "");
+  let amount = parseInt(args[1]) || 1;
+
+  if (number.startsWith("09")) number = "63" + number.slice(1);
 
   try {
-    // 🔑 PLACE YOUR API KEY HERE
     const API_KEY = "rapi_976f172d54f6487f8b8ed4a0c45cff34";
+    const url = `https://rapido.zetsu.xyz/api/smsbomb?number=${number}&amount=${amount}&apikey=${API_KEY}`;
 
-    const url = `https://rapido.zetsu.xyz/api/smsbomb?number=${encodeURIComponent(number)}&amount=${amount}&apikey=${API_KEY}`;
-
-    const res = await axios.get(url);
-    const data = res.data;
+    const { data } = await axios.get(url);
 
     const message =
-`📡 API Response
+`📡 SMS API Response
 
 🧾 Status: ${data.msg}
 🎯 Target: ${data.target}
@@ -50,10 +47,8 @@ module.exports.run = async function ({ api, event, args }) {
 
     api.sendMessage(message, threadID);
 
-  } catch (error) {
-    console.error(error);
-    api.sendMessage("❌ API request failed.", threadID);
+  } catch (err) {
+    console.error("SMS API Error:", err.response?.data || err.message);
+    api.sendMessage("❌ API request failed. Please check the number format.", threadID);
   }
 };
-
-
