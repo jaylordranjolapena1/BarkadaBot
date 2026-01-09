@@ -86,7 +86,7 @@ const commandHandler = require("./utils/commandHandler");
 
 // 🔥 REAL MIRAI EVENT HANDLER (INLINE, NO CONFLICT)
 async function eventHandler({ api, event }) {
-  const evt = event.type;
+  const evt = event.type || event.logMessageType;
 
   for (const ev of global.client.events.values()) {
     if (!ev.config.eventType.includes(evt)) continue;
