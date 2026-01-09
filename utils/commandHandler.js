@@ -1,9 +1,10 @@
 module.exports = async function ({ api, event }) {
   const client = global.client;
 
-  if (!event || !event.body) return;
+  console.log("🧪 CMD EVENT:", event.type, event.body, "isCommand:", event.isCommand);
 
-  console.log("🧪 CMD EVENT:", event.type, event.body);
+  // 🔒 accept only piped command messages
+  if (!event || !event.body || event.isCommand !== true) return;
 
   // ===== LOAD CONFIG SAFELY =====
   delete require.cache[require.resolve(client.configPath)];
