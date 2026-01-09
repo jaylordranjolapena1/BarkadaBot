@@ -122,15 +122,22 @@ for (const ev of global.client.events.values()) {
 }
 
   api.listenMqtt(async (err, event) => {
-    if (err) return console.error(err);
+  if (err) return console.error(err);
 
-    console.log("📥 EVENT:", event.logMessageType || event.type);
+  console.log("📥 EVENT:", event.logMessageType || event.type);
 
-    try {
-      await eventHandler({ api, event });
+  try {
+    // Run events first
+    await eventHandler({ api, event });
+
+    // 🔥 Force message passthrough for commands
+    if (event.body && typeof event.body === "string") {
+      event.isCommand = true;
       await commandHandler({ api, event, Users: global.Users });
-    } catch (e) {
-      console.error("Handler error:", e);
     }
-  });
+
+  } catch (e) {
+    console.error("Handler error:", e);
+  }
+});
 });
