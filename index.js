@@ -1,3 +1,11 @@
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("💥 UNHANDLED PROMISE:", reason);
+});
+
+process.on("uncaughtException", err => {
+  console.error("💥 UNCAUGHT EXCEPTION:", err);
+});
+
 const express = require("express");
 const app = express();
 const login = require("fca-smart-shankar");
