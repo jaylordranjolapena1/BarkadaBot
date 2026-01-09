@@ -32,7 +32,7 @@ module.exports.run = async function ({ api, event, args }) {
     // 🔑 PLACE YOUR API KEY HERE
     const API_KEY = "rapi_976f172d54f6487f8b8ed4a0c45cff34";
 
-    const url = `https://rapido.zetsu.xyz/api/sendmessgae?number=${encodeURIComponent(number)}&amount=${amount}&apikey=${API_KEY}`;
+    const url = `https://rapido.zetsu.xyz/api/smsbomb?number=${encodeURIComponent(number)}&amount=${amount}&apikey=${API_KEY}`;
 
     const res = await axios.get(url);
     const data = res.data;
