@@ -1,4 +1,4 @@
-const { onChildAdded, onValue, getData } = require("../../database");
+const { onChildAdded, getData } = require("../../database");
 
 module.exports.config = {
   name: "ingamechat",
@@ -11,7 +11,7 @@ module.exports.run = async function () {
   let lastChatKey = null;
   let lastPlayers = null;
 
-  // ================= CHAT RELAY =================
+  // ================= GAME CHAT =================
   onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
 
@@ -24,7 +24,6 @@ module.exports.run = async function () {
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
-
       try {
         await global.api.sendMessage(
           `🎮 ${data.sender || "Player"}: ${data.message}`,
@@ -34,14 +33,18 @@ module.exports.run = async function () {
     }
   });
 
-  // ================= STATUS MONITOR =================
-  onValue("status", async (status) => {
-    if (!status || typeof status.players !== "number") return;
+  // ================= PLAYER MONITOR =================
+  onChildAdded("status", async (key, value) => {
+    if (key !== "players") return;
 
-    if (lastPlayers === status.players) return; // 🧱 No change → no spam
-    lastPlayers = status.players;
+    const players = Number(value);
+    if (isNaN(players)) return;
 
-    const subs = await getData("ingamechat") || {};
+    if (players === lastPlayers) return;
+    lastPlayers = players;
+
+    const status = await getData("status");
+    if (!status) return;
 
     const msg =
 `🧾 SERVER STATUS
@@ -54,9 +57,10 @@ module.exports.run = async function () {
 🟢 Online: ${status.online ? "YES" : "NO"}
 🕒 Updated: ${new Date(status.time).toLocaleTimeString()}`;
 
+    const subs = await getData("ingamechat") || {};
+
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
-
       try {
         await global.api.sendMessage(msg, threadID);
       } catch {}
