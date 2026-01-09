@@ -1,4 +1,4 @@
-const { onChildAdded, onValue, getData } = require("../../database");
+const { onChildAdded, getData } = require("../../database");
 
 module.exports.config = {
   name: "ingamechat",
@@ -18,7 +18,7 @@ module.exports.run = async function () {
     if (key === lastChatKey) return;
     lastChatKey = key;
 
-    // 🚫 Ignore Facebook to prevent echo
+    // Prevent echo
     if (data.source === "facebook") return;
 
     const subs = await getData("ingamechat") || {};
@@ -26,18 +26,23 @@ module.exports.run = async function () {
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
 
-      await global.api.sendMessage(
-        `🎮 ${data.sender || "Player"}: ${data.message}`,
-        threadID
-      );
+      try {
+        await global.api.sendMessage(
+          `🎮 ${data.sender || "Player"}: ${data.message}`,
+          threadID
+        );
+      } catch {}
     }
   });
 
   // ================= STATUS MONITOR =================
-  onValue("status/players", async (players) => {
-    players = Number(players);
+  onChildAdded("status", async (key, value) => {
+    if (key !== "players") return;
+
+    const players = Number(value);
     if (isNaN(players)) return;
 
+    // Send only when player count changes
     if (players === lastPlayers) return;
     lastPlayers = players;
 
@@ -59,7 +64,9 @@ module.exports.run = async function () {
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
-      await global.api.sendMessage(msg, threadID);
+      try {
+        await global.api.sendMessage(msg, threadID);
+      } catch {}
     }
   });
 };
