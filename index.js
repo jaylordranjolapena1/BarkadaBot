@@ -128,11 +128,11 @@ login({ appState }, (err, api) => {
     }
   }
 
-  // 🔥 MAIN MESSAGE LISTENER (FIXED)
-  api.listen(async (err, event) => {
+  // 🔥 MAIN MESSAGE LISTENER — CORRECT & STABLE
+  api.listenMqtt(async (err, event) => {
     if (err) return console.error(err);
 
-    console.log("📥 EVENT:", event.type);
+    console.log("📥 EVENT:", event.type || event.logMessageType);
 
     try {
       await eventHandler({ api, event });
