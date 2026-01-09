@@ -13,17 +13,27 @@ module.exports.run = async function () {
   onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
 
+    // 🧱 Block echo from Facebook
+    if (data.source === "facebook") return;
+
     if (key === lastKey) return;
     lastKey = key;
 
-    console.log("📩 New chat:", data.message);
+    console.log("📩 New game chat:", data.message);
 
     const subs = await getData("ingamechat") || {};
 
     for (const threadID in subs) {
       if (!subs[threadID]) continue;
 
-      global.api.sendMessage(`🎮 ${data.sender || "Player"}: ${data.message}`, threadID);
+      try {
+        await global.api.sendMessage(
+          `🎮 ${data.sender || "Player"}: ${data.message}`,
+          threadID
+        );
+      } catch (e) {
+        console.log("⚠️ Message blocked by Facebook");
+      }
     }
   });
 };
