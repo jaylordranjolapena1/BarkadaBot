@@ -1,4 +1,4 @@
-const { onChildAdded, getData } = require("../../database");
+const { onChildAdded, onValue, getData } = require("../../database");
 
 module.exports.config = {
   name: "ingamechat",
@@ -8,18 +8,17 @@ module.exports.config = {
 module.exports.run = async function () {
   console.log("🎧 IngameChat listener mounted");
 
-  let lastKey = null;
+  let lastChatKey = null;
+  let lastPlayers = null;
 
+  // ================= CHAT RELAY =================
   onChildAdded("chat", async (key, data) => {
     if (!data || !data.message) return;
 
-    // 🧱 Block echo from Facebook
     if (data.source === "facebook") return;
 
-    if (key === lastKey) return;
-    lastKey = key;
-
-    console.log("📩 New game chat:", data.message);
+    if (key === lastChatKey) return;
+    lastChatKey = key;
 
     const subs = await getData("ingamechat") || {};
 
@@ -31,9 +30,36 @@ module.exports.run = async function () {
           `🎮 ${data.sender || "Player"}: ${data.message}`,
           threadID
         );
-      } catch (e) {
-        console.log("⚠️ Message blocked by Facebook");
-      }
+      } catch {}
+    }
+  });
+
+  // ================= STATUS MONITOR =================
+  onValue("status", async (status) => {
+    if (!status || typeof status.players !== "number") return;
+
+    if (lastPlayers === status.players) return; // 🧱 No change → no spam
+    lastPlayers = status.players;
+
+    const subs = await getData("ingamechat") || {};
+
+    const msg =
+`🧾 SERVER STATUS
+━━━━━━━━━━━━━━━
+👥 Players: ${status.players}/${status.max}
+⚙️ TPS: ${status.tps}
+🔥 CPU: ${status.cpu}%
+🧠 RAM: ${status.usedRam}/${status.maxRam} MB
+🌋 Nether: ${status.nether ? "ON" : "OFF"}
+🟢 Online: ${status.online ? "YES" : "NO"}
+🕒 Updated: ${new Date(status.time).toLocaleTimeString()}`;
+
+    for (const threadID in subs) {
+      if (!subs[threadID]) continue;
+
+      try {
+        await global.api.sendMessage(msg, threadID);
+      } catch {}
     }
   });
 };
