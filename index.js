@@ -67,7 +67,7 @@ for (const file of fs.readdirSync(cmdPath)) {
   }
 }
 
-// ================= LOAD EVENTS (FIXED ENGINE) =================
+// ================= LOAD EVENTS =================
 const evPath = path.join(__dirname, "Jaylord/events");
 for (const file of fs.readdirSync(evPath)) {
   try {
@@ -84,9 +84,8 @@ for (const file of fs.readdirSync(evPath)) {
 // ================= HANDLERS =================
 const commandHandler = require("./utils/commandHandler");
 
-// 🔥 REAL MIRAI EVENT HANDLER (INLINE, NO CONFLICT)
 async function eventHandler({ api, event }) {
-  const evt = event.type || event.logMessageType;
+  const evt = event.type;
 
   for (const ev of global.client.events.values()) {
     if (!ev.config.eventType.includes(evt)) continue;
@@ -107,39 +106,40 @@ login({ appState }, (err, api) => {
   api.setOptions({
     listenEvents: true,
     updatePresence: true,
-    selfListen: false
+    selfListen: false,
+    logLevel: "silent"
   });
 
   console.log(`🤖 ${global.config.botName} is online`);
-  // 🚀 RUN BOOT EVENTS
-for (const ev of global.client.events.values()) {
-  if (ev.config.eventType.includes("__BOOT__")) {
+
+  // 🚀 BOOT EVENTS
+  for (const ev of global.client.events.values()) {
+    if (ev.config.eventType.includes("__BOOT__")) {
+      try {
+        ev.run();
+        console.log(`🧩 BOOT event started: ${ev.config.name}`);
+      } catch (e) {
+        console.error(`❌ BOOT event error [${ev.config.name}]:`, e);
+      }
+    }
+  }
+
+  // 🔥 MAIN MESSAGE LISTENER (FIXED)
+  api.listen(async (err, event) => {
+    if (err) return console.error(err);
+
+    console.log("📥 EVENT:", event.type);
+
     try {
-      ev.run();
-      console.log(`🧩 BOOT event started: ${ev.config.name}`);
+      await eventHandler({ api, event });
+
+      if (event.body && typeof event.body === "string") {
+        event.isCommand = true;
+        await commandHandler({ api, event, Users: global.Users });
+      }
+
     } catch (e) {
-      console.error(`❌ BOOT event error [${ev.config.name}]:`, e);
+      console.error("Handler error:", e);
     }
-  }
-}
-
-  api.listenMqtt(async (err, event) => {
-  if (err) return console.error(err);
-
-  console.log("📥 EVENT:", event.logMessageType || event.type);
-
-  try {
-    // Run events first
-    await eventHandler({ api, event });
-
-    // 🔥 Force message passthrough for commands
-    if (event.body && typeof event.body === "string") {
-      event.isCommand = true;
-      await commandHandler({ api, event, Users: global.Users });
-    }
-
-  } catch (e) {
-    console.error("Handler error:", e);
-  }
-});
+  });
 });
