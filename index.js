@@ -88,7 +88,7 @@ const commandHandler = require("./utils/commandHandler");
 async function eventHandler({ api, event }) {
   for (const ev of global.client.events.values()) {
     const evt = event.logMessageType || event.type;
-if (!ev.config.eventType.includes(evt) && !(evt === "message" && ev.config.eventType.includes("onChat"))) continue;
+    if (!ev.config.eventType.includes(evt) && !(evt === "message" && ev.config.eventType.includes("onChat"))) continue;
 
     try {
       await ev.run({ api, event });
