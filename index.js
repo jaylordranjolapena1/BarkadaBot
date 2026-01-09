@@ -128,22 +128,5 @@ login({ appState }, (err, api) => {
     }
   }
 
-  // 🔥 MAIN MESSAGE LISTENER — CORRECT & STABLE
-  api.listenMqtt(async (err, event) => {
-    if (err) return console.error(err);
-
-    console.log("📥 EVENT:", event.type || event.logMessageType);
-
-    try {
-      await eventHandler({ api, event });
-
-      if (event.body && typeof event.body === "string") {
-        event.isCommand = true;
-        await commandHandler({ api, event, Users: global.Users });
-      }
-
-    } catch (e) {
-      console.error("Handler error:", e);
-    }
-  });
+  
 });
