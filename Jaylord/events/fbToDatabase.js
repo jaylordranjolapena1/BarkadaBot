@@ -4,11 +4,18 @@ console.log("🔥 fbToDatabase LOADED");
 
 module.exports.config = {
   name: "fbToDatabase",
-  eventType: ["message"]
+  eventType: ["message", "message_reply"]   // 🔥 FIXED
 };
 
 module.exports.run = async function ({ api, event }) {
-  if (!event.body) return;
+
+  // 🧪 DEBUG - makita natin ang totoong event type
+  console.log("🧪 RAW EVENT:", event.type, event.logMessageType);
+
+  // Only handle real messages
+  if (!event.body || typeof event.body !== "string") return;
+
+  // Prevent echo
   if (event.senderID === api.getCurrentUserID()) return;
 
   const threadID = event.threadID;
@@ -16,7 +23,7 @@ module.exports.run = async function ({ api, event }) {
   const enabled = await getData(`ingamechat/${threadID}`);
   console.log("📦 IngameChat:", threadID, "=", enabled);
 
-  if (!enabled) return;   // 🔧 FIXED
+  if (enabled !== true) return;   // 🔒 STRICT CHECK
 
   const msg = event.body.trim();
   if (!msg) return;
