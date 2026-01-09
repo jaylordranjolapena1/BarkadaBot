@@ -86,9 +86,10 @@ const commandHandler = require("./utils/commandHandler");
 
 // 🔥 REAL MIRAI EVENT HANDLER (INLINE, NO CONFLICT)
 async function eventHandler({ api, event }) {
+  const evt = event.type;
+
   for (const ev of global.client.events.values()) {
-    const evt = event.logMessageType || event.type;
-    if (!ev.config.eventType.includes(evt) && !(evt === "message" && ev.config.eventType.includes("onChat"))) continue;
+    if (!ev.config.eventType.includes(evt)) continue;
 
     try {
       await ev.run({ api, event });
