@@ -5,7 +5,7 @@ module.exports.config = {
   version: "1.1.0",
   credits: "ChatGPT + Barkada",
   description: "Send message via external API (Admin only)",
-  usage: "/smsbomb <number> [amount]",
+  usage: "<number> [amount]",
   cooldown: 5
 };
 
@@ -22,7 +22,7 @@ module.exports.run = async function ({ api, event, args }) {
   }
 
   if (!args[0]) {
-    return api.sendMessage("Usage: /fetch <number> [amount]", threadID);
+    return api.sendMessage("Usage: /smsbomb <number> [amount]", threadID);
   }
 
   const number = args[0];
