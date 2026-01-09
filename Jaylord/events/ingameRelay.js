@@ -53,8 +53,8 @@ module.exports.run = async function () {
 `🧾 SERVER STATUS
 ━━━━━━━━━━━━━━━
 👥 Players: ${status.players}/${status.max}
-⚙️ TPS: ${status.tps}
-🔥 CPU: ${status.cpu}%
+⚙️ TPS: ${status.tps} / 20
+🔥 CPU: ${status.cpu}% / 400
 🧠 RAM: ${status.usedRam}/${status.maxRam} MB
 🌋 Nether: ${status.nether ? "ON" : "OFF"}
 🟢 Online: ${status.online ? "YES" : "NO"}
