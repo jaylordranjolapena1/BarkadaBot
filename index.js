@@ -84,20 +84,24 @@ for (const file of fs.readdirSync(evPath)) {
 // ================= HANDLERS =================
 const commandHandler = require("./utils/commandHandler");
 
-async function eventHandler({ api, event }) {
-  const evt = event.type || event.logMessageType;
+// 🔥 MAIN MESSAGE LISTENER (FINAL WORKING)
+  api.listenMqtt(async (err, event) => {
+    if (err) return console.error(err);
 
-  for (const ev of global.client.events.values()) {
-    if (!ev.config.eventType.includes(evt)) continue;
+    console.log("📥 EVENT:", event.type || event.logMessageType);
 
     try {
-      await ev.run({ api, event });
-    } catch (err) {
-      console.error(`❌ Event error [${ev.config.name}]:`, err);
-    }
-  }
-}
+      await eventHandler({ api, event });
 
+      if (event.body && typeof event.body === "string") {
+        event.isCommand = true;
+        await commandHandler({ api, event, Users: global.Users });
+      }
+
+    } catch (e) {
+      console.error("Handler error:", e);
+    }
+  });
 // ================= LOGIN =================
 login({ appState }, (err, api) => {
   if (err) return console.error(err);
