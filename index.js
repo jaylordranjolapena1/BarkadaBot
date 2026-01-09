@@ -85,7 +85,7 @@ for (const file of fs.readdirSync(evPath)) {
 const commandHandler = require("./utils/commandHandler");
 
 async function eventHandler({ api, event }) {
-  const evt = event.type;
+  const evt = event.type || event.logMessageType;
 
   for (const ev of global.client.events.values()) {
     if (!ev.config.eventType.includes(evt)) continue;
